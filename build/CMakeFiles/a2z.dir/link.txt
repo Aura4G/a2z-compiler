@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/a2z.dir/src/main.cpp.o -o a2z 
