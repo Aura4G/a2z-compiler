@@ -98,8 +98,7 @@ public:
     }
 
 private:
-
-    [[nodiscard]] std::optional<char> peak(int ahead = 1) const {
+    [[nodiscard]] inline std::optional<char> peak(int ahead = 1) const {
         if (m_index + ahead > m_src.length()) {
             return {};
         } else {
@@ -107,7 +106,7 @@ private:
         }
     }
     
-    char consume() {
+    inline char consume() {
         return m_src.at(m_index++);
     }
 
