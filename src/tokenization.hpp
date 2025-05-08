@@ -14,7 +14,12 @@
 enum class TokenType {
     exit,
     int_lit,
-    semi
+    semi,
+    open_paren,
+    close_paren,
+    ident,
+    let,
+    eq
 };
 
 /**
@@ -49,46 +54,67 @@ public:
 
         std::string buf {};
 
-        //continues iterating so long as the peaking ahead returns a value;
-        while(peak().has_value()) {
+        //continues iterating so long as the peeking ahead returns a value;
+        while(peek().has_value()) {
             //checks if a letter has been entered
-            if (std::isalpha(peak().value())) {
+            if (std::isalpha(peek().value())) {
                 buf.push_back(consume());
                 //so it can continue adding the full phrase to the buffer
-                while (peak().has_value() && std::isalnum(peak().value())) {
+                while (peek().has_value() && std::isalnum(peek().value())) {
                     buf.push_back(consume());
                 }
-                //if the contents of the discovered word through iterating makes "exit"
+                //if the contents of the discovered word through iterating makes a key word
                 if (buf == "exit") {
                     tokens.push_back({.type = TokenType::exit}); //it is an exit type token
                     buf.clear();
                     continue;
+                }
+                else if (buf == "let") {
+                    tokens.push_back({.type = TokenType::let}); //it is an let type token
+                    buf.clear();
+                    continue;
                 } else {
-                    std::cerr << "You messed up." << std::endl; //makeshift error statement
-                    exit(EXIT_FAILURE);
+                    tokens.push_back({.type = TokenType::ident, .value = buf});
+                    buf.clear();
+                    continue;
                 }
             }
             //checks if a lexer starts with a digit
-            else if (std::isdigit(peak().value())) {
+            else if (std::isdigit(peek().value())) {
                 buf.push_back(consume());
                 //and iterates to consume the entire number in the buffer
-                while (peak().has_value() && std::isdigit(peak().value())) {
+                while (peek().has_value() && std::isdigit(peek().value())) {
                     buf.push_back(consume());
                 }
                 tokens.push_back({.type = TokenType::int_lit, .value = buf});
                 buf.clear(); //buffer always clears for next iteration once token is saved
                 continue;
             }
-            else if (peak().value() == ';') { //semicolon token
+            else if (peek().value() == '(') {
+                consume();
+                tokens.push_back({.type = TokenType::open_paren});
+                continue;
+            }
+            else if (peek().value() == ')') {
+                consume();
+                tokens.push_back({.type = TokenType::close_paren});
+                continue;
+            }
+            else if (peek().value() == '=') {
+                consume();
+                tokens.push_back({.type = TokenType::eq});
+                continue;
+            }
+            else if (peek().value() == ';') { //semicolon token
                 consume();
                 tokens.push_back({.type = TokenType::semi});
                 continue;
             }
-            else if (std::isspace(peak().value())) { //spaces still need to be consumed
+            else if (std::isspace(peek().value())) { //spaces still need to be consumed
                 consume();
                 continue;
             } else { //blanket error message
-                std::cerr << "You messed up." << std::endl;
+                std::cerr << "Unrecognised token." << std::endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -98,14 +124,19 @@ public:
     }
 
 private:
-    [[nodiscard]] inline std::optional<char> peak(int ahead = 1) const {
-        if (m_index + ahead > m_src.length()) {
+    /** 
+     * peaks however many characters ahead in the input string
+     * @param offset the jump ahead where the character gets peeked
+    */
+    [[nodiscard]] inline std::optional<char> peek(int offset = 0) const {
+        if (m_index + offset >= m_src.length()) {
             return {};
         } else {
-            return m_src.at(m_index);
+            return m_src.at(m_index + offset);
         }
     }
     
+    /* adds the current character to the buffer and moves along the string by 1 */
     inline char consume() {
         return m_src.at(m_index++);
     }
